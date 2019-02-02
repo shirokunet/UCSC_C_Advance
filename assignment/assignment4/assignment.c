@@ -11,12 +11,12 @@ Date: Feb 1, 2019
 Objective: Practice.
 Comments: None.
 Input sample: 
-91, 92, 85, 58, 87, 75, 89, 97, 79, 65, 
-88, 72, 81, 94, 90, 61, 72, 75, 68, 77, 
-75, 49, 87, 79, 65, 64, 62, 51, 44, 70, 
-81, 72, 85, 78, 77, 75, 79, 87, 69, 55,
-88, 62, 71, 74, 80, 71, 62, 85, 68, 87, 
-75, 89, 97, 79, 65, 48, 72, 61, 64, 90
+91,92,85,58,87,75,89,97,79,65
+88,72,81,94,90,61,72,75,68,77
+75,49,87,79,65,64,62,51,44,70
+81,72,85,78,77,75,79,87,69,55
+88,62,71,74,80,71,62,85,68,87
+75,89,97,79,65,48,72,61,64,90
 ****************************************************/
 
 #include <stdio.h>
@@ -29,50 +29,72 @@ Input sample:
 typedef struct
 {
     int num;
+    int scr[EXAM_SUM];
     int min;
     int max;
     int tot;
     int avg;
-    char grade[100];
+    char grd[EXAM_SUM][5];
 } result;
 
-result calc_min_max_avg(int data[EXAM_SUM]){
-    static int num = 0;
+result grading(int data[EXAM_SUM]){
+    static int num = 1000;
 
-    result exam_result;
-    test.num = num;
-    test.min = 0;
-    test.max = 0;
-    test.tot = 0;
-    test.avg = 0;
+    result exam;
+    exam.num = num;
+    exam.min = 0;
+    exam.max = 0;
+    exam.tot = 0;
+    exam.avg = 0;
 
     for (int i = 0; i < EXAM_SUM; ++i)
     {
-        if (test.min == 0 || test.min > data[i])
-            test.min = data[i];
-        if (test.max == 0 || test.max < data[i])
-            test.max = data[i];
-        if (test.avg == 0)
-            test.avg = data[i];
-        test.tot += data[i];
+        exam.scr[i] = data[i];
+        if (exam.min == 0 || exam.min > data[i])
+            exam.min = data[i];
+        if (exam.max == 0 || exam.max < data[i])
+            exam.max = data[i];
+        if (exam.avg == 0)
+            exam.avg = data[i];
+        exam.tot += data[i];
 
-        test.grade = 
+        if (data[i] > 95)
+            strcpy(exam.grd[i], "A+");
+        else if (data[i] == 95)
+            strcpy(exam.grd[i], "A");
+        else if (data[i] >= 90)
+            strcpy(exam.grd[i], "A-");
+        else if (data[i] > 85)
+            strcpy(exam.grd[i], "B+");
+        else if (data[i] == 85)
+            strcpy(exam.grd[i], "B");
+        else if (data[i] >= 80)
+            strcpy(exam.grd[i], "B-");
+        else if (data[i] > 75)
+            strcpy(exam.grd[i], "C+");
+        else if (data[i] == 75)
+            strcpy(exam.grd[i], "C");
+        else if (data[i] >= 70)
+            strcpy(exam.grd[i], "C-");
+        else if (data[i] >= 60)
+            strcpy(exam.grd[i], "D");
+        else if (data[i] < 60)
+            strcpy(exam.grd[i], "F");
     }
 
-    test.avg = test.tot / EXAM_SUM;
-
-    printf("Num: %d\n", test.num);
-    printf("Min: %d\n", test.min);
-    printf("Max: %d\n", test.max);
-    printf("Avg: %d\n", test.avg);
-
+    exam.avg = exam.tot / EXAM_SUM;
     num += 1;
 
-    return exam_result;
+    return exam;
 }
 
 int main(){
     FILE *lf,*sf;
+    char bff[100];
+    char *value_a;
+    int value[STUDENT_SUM][EXAM_SUM];
+    int value_num;
+    result exam;
 
     /* file open */
     if(!(lf=fopen("input.csv","r")) || (!(sf=fopen("output.csv","w")))){
@@ -80,33 +102,35 @@ int main(){
         return -1;
     }
 
-    char bff[100];
-    char *value_a;
-    int value[STUDENT_SUM][EXAM_SUM];
-    int value_num;
-    result exam;
-
     for(int i = 0 ; i < STUDENT_SUM ; i++){
-
         /* read data */
         fgets(bff, 100, lf);
         value_num = 0;
         for(value_a=strtok(bff, ","); value_a!=NULL; value_a=strtok(NULL, ",")) {
             value[i][value_num] = atoi(value_a);
-            printf("%d,", value[i][value_num]);
             value_num += 1;
         }
-        printf("\n");
 
         /* calc data */
-        exam = calc_min_max_avg(value[i]);
+        exam = grading(value[i]);
+
+        /* check data */
+        printf("Student ID: %d\n", exam.num);
+        printf("Minimum: %d, Maximum: %d, Average: %d\n", exam.min, exam.max, exam.avg);
+        for (int j = 0; j < EXAM_SUM; ++j)
+        {
+            printf("Score: %d, Grade: %s\n", exam.scr[j], exam.grd[j]);
+        }
         printf("\n");
 
         /* write data */
-        for(int i = 0 ; i < STUDENT_SUM ; i++){
-            fprintf(sf, "Student ID: %d¥n", exam.num);
-            fprintf(sf, "Minimum: %d, Maximum: %d, Average: %d\n", exam.min, exam.max, exam.avg);
+        fprintf(sf, "Student ID: %d\n", exam.num);
+        fprintf(sf, "Minimum: %d, Maximum: %d, Average: %d\n", exam.min, exam.max, exam.avg);
+        for (int j = 0; j < EXAM_SUM; ++j)
+        {
+            fprintf(sf, "Score: %d, Grade: %s\n", exam.scr[j], exam.grd[j]);
         }
+        fprintf(sf, "\n");
     }
 
     /* file close */
