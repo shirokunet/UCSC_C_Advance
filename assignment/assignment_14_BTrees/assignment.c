@@ -4,295 +4,388 @@ University of California Extension, Santa Cruz
 Advanced C Programming
 Instructor: Rajainder A. Yeldandi
 Author: Reyes
-Assignment Number: 13
-Topic: Binary Trees.
+Assignment Number: 14
+Topic: BTrees.
 file name: assignment.c
-Date: Mar 14, 2019
+Date: Mar 16, 2019
 Objective: Practice.
 Comments: None.
-Input csv sample: 
-55, 62, 89, 85, 97, 56, 71, 82, 38, 49, 25, 67, 58, 92, 100, 44, 69, 72, 65, 
-52, 41, 84, 21, 60, 95, 12, 35, 42, 105, 99, 34, 47, 35, 79, 95, 50, 25, 51
-Input sample for search: 71,51,38,5,0,25,42,91,35,47
+Input csv sample:
+572, 430, 315, 363, 320, 545, 451, 437, 476, 472, 493, 395, 462, 521, 406,
+412, 510, 560, 425, 595, 580, 583, 531, 511, 459, 518, 356, 379, 488, 532
 ****************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
 
-#define M  2  /* 1ページのデータ数の上限の半分 */
+#define NUM 4    // Half of data size
 
-typedef int keytype;                 /* 探索のキーの型 */
-typedef enum {FALSE, TRUE} boolean;  /* ${\tt FALSE} = 0$, ${\tt TRUE} = 1$ */
-
-struct btreenode {                /* ページの定義 */
-    int n;                           /* データ数 */
-    keytype key[2 * M];              /* キー */
-    struct btreenode *branch[2 * M + 1];  /* 他ページへのポインタ */
+struct btreenode {
+    int numtrees;
+    int key[2 * NUM];
+    struct btreenode *branch[2 * NUM + 1];
 };
 typedef struct btreenode* BTREEP;
 
-// BTREEP root = NULL;                 /* B木の根 */
-// keytype key;                         /* キー */
-// boolean done, deleted, undersize;    /* 論理型の変数 */
-// boolean undersize;    /* 論理型の変数 */
-// BTREEP newp;       /* {\tt insert()} の生成した新しいページ */
-// char *message;                       /* 関数の返すメッセージ */
-
-BTREEP newpage(void)  /* 新しいページの生成 */
+BTREEP make_btreenode(void)
 {
     BTREEP p;
-
-    if ((p = malloc(sizeof *p)) == NULL) {
-        printf("メモリ不足.\n");  exit(EXIT_FAILURE);
+    if ((p = malloc(sizeof *p)) == NULL)
+    {
+        printf("It doesn't have enough memory size.\n");
+        exit(EXIT_FAILURE);
     }
     return p;
 }
 
-void search(BTREEP root, keytype key)  /* キー {\tt key} をB木から探す */
+void search_userinput(BTREEP root, int key)
 {
-    BTREEP p;
+    BTREEP p = root;
     int k;
 
-    p = root;
-    while (p != NULL) {
+    while (p != NULL)
+    {
         k = 0;
-        while (k < p->n && p->key[k] < key) k++;
-        if (k < p->n && p->key[k] == key) {
-            // message = "見つかりました";
-            printf("見つかりました\n");
+        while (k < p->numtrees && p->key[k] < key)
+            k++;
+        if (k < p->numtrees && p->key[k] == key)
+        {
+            printf(" %d\tFound!\n", key);
             return;
         }
         p = p->branch[k];
     }
-    // message = "見つかりません";
-    printf("見つかりません\n");
+    printf(" %d\tCould not find...\n", key);
 }
 
-void insertitem(BTREEP p, int k, keytype key, BTREEP newp)  /* {\tt key} を {\tt p->key[k]} に挿入 */
+void insert_node(BTREEP p, int k, int key, BTREEP newp)
 {
-    int i;
-
-    for (i = p->n; i > k; i--) {
+    for (int i = p->numtrees; i > k; i--)
+    {
         p->key[i] = p->key[i - 1];
         p->branch[i + 1] = p->branch[i];
     }
-    p->key[k] = key;  p->branch[k + 1] = newp;  p->n++;
+    p->key[k] = key;
+    p->branch[k + 1] = newp;
+    p->numtrees++;
 }
 
-void split(BTREEP p, int k, keytype *key, BTREEP *newp)  /* {\tt key} を {\tt p->key[k]} に挿入し, ページ {\tt p} を割る */
+void split_node(BTREEP p, int k, int *key, BTREEP *newp)
 {
-    int j, m;
-    BTREEP q;
+    int m = 0;
+    BTREEP q = make_btreenode();
 
-    if (k <= M) m = M;  else m = M + 1;
-    q = newpage();
-    for (j = m + 1; j <= 2 * M; j++) {
+    if (k <= NUM)
+        m = NUM;
+    else
+        m = NUM + 1;
+
+    for (int j = m + 1; j <= 2 * NUM; j++)
+    {
         q->key[j - m - 1] = p->key[j - 1];
         q->branch[j - m] = p->branch[j];
     }
-    q->n = 2 * M - m;  p->n = m;
-    if (k <= M) insertitem(p, k, *key, *newp);
-    else        insertitem(q, k - m, *key, *newp);
-    *key = p->key[p->n - 1];
-    q->branch[0] = p->branch[p->n];  p->n--;
-    *newp = q;  /* 新しいページを {\tt newp} に入れて戻る */
+    q->numtrees = 2 * NUM - m;  p->numtrees = m;
+
+    if (k <= NUM)
+        insert_node(p, k, *key, *newp);
+    else
+        insert_node(q, k - m, *key, *newp);
+
+    q->branch[0] = p->branch[p->numtrees];
+    p->numtrees--;
+
+    *key = p->key[p->numtrees - 1];
+    *newp = q;
 }
 
-void insertsub(BTREEP p, keytype *key, boolean *done, BTREEP *newp)  /* {\tt p} から木を再帰的にたどって挿入 */
+void insert_node_rec(BTREEP p, int *key, bool *done, BTREEP *newp)
 {
-    int k;
+    int k = 0;
 
     if (p == NULL) {
-        *done = FALSE;  *newp = NULL;  return;
-    }
-    k = 0;
-    while (k < p->n && p->key[k] < *key) k++;
-    if (k < p->n && p->key[k] == *key) {
-        // message = "もう登録されています";
-        printf("もう登録されています\n");
-        *done = TRUE;
+        *done = false;
+        *newp = NULL;
         return;
     }
-    insertsub(p->branch[k], key, done, newp);
-    if (*done) return;
-    if (p->n < 2 * M) {   /* ページが割れない場合 */
-        insertitem(p, k, *key, *newp);  *done = TRUE;
-    } else {              /* ページが割れる場合 */
-        split(p, k, key, newp);  *done = FALSE;
+
+    while (k < p->numtrees && p->key[k] < *key)
+        k++;
+
+    if (k < p->numtrees && p->key[k] == *key)
+    {
+        printf("The tree already has the value.\n");
+        *done = true;
+        return;
+    }
+
+    insert_node_rec(p->branch[k], key, done, newp);
+    if (*done)
+        return;
+
+    if (p->numtrees < 2 * NUM)  // Can not split_node tree.
+    {   
+        insert_node(p, k, *key, *newp);
+        *done = true;
+    }
+    else    // Can split_node tree.
+    {
+        split_node(p, k, key, newp);
+        *done = false;
     }
 }
 
-void insert(BTREEP *root, keytype *key)  /* キー {\tt key} をB木に挿入 */
+void insert_userinput(BTREEP *root, int key)
 {
     BTREEP p;
-    boolean done;
+    bool done;
     BTREEP newp;
 
-    // message = "登録しました";
-    printf("登録しました\n");
-    insertsub(*root, key, &done, &newp);
-    if (done) return;
+    // printf("Subscriped the value.\n");
 
-    p = newpage();  p->n = 1;  p->key[0] = *key;
-    p->branch[0] = *root;  p->branch[1] = newp;  *root = p;
+    insert_node_rec(*root, &key, &done, &newp);
+    if (done)
+        return;
+
+    p = make_btreenode();
+    p->numtrees = 1;
+    p->key[0] = key;
+    p->branch[0] = *root;
+    p->branch[1] = newp;
+
+    *root = p;
 }
 
-void removeitem(BTREEP p, int k, boolean *undersize)
-    /* {\tt p->key[k]}, {\tt p->branch[k+1]} を外す. */
-    /* ページが小さくなりすぎたら {\tt undersize} フラグを立てる. */
+void remove_node(BTREEP p, int k, bool *undersize)
 {
-    while (++k < p->n) {
+    while (++k < p->numtrees)
+    {
         p->key[k - 1] = p->key[k];
         p->branch[k] = p->branch[k + 1];
     }
-    *undersize = --(p->n) < M;
+    *undersize = --(p->numtrees) < NUM;
 }
 
-void moveright(BTREEP p, int k)
-    /* {\tt p->branch[k - 1]} の最右要素を */
-    /* {\tt p->key[k - 1]} 経由で {\tt p->branch[k]} に動かす */
+void move_rightnode(BTREEP p, int k)
 {
-    int j;
-    BTREEP left, right;
+    BTREEP left  = p->branch[k - 1];
+    BTREEP right = p->branch[k];
 
-    left = p->branch[k - 1];  right = p->branch[k];
-    for (j = right->n; j > 0; j--) {
+    for (int j = right->numtrees; j > 0; j--)
+    {
         right->key[j] = right->key[j - 1];
         right->branch[j + 1] = right->branch[j];
     }
+
     right->branch[1] = right->branch[0];
-    right->n++;
+    right->numtrees++;
     right->key[0] = p->key[k - 1];
-    p->key[k - 1] = left->key[left->n - 1];
-    right->branch[0] = left->branch[left->n];
-    left->n--;
+    p->key[k - 1] = left->key[left->numtrees - 1];
+    right->branch[0] = left->branch[left->numtrees];
+    left->numtrees--;
 }
 
-void moveleft(BTREEP p, int k)
-    /* {\tt p->branch[k]} の最左要素を */
-    /* {\tt p->key[k - 1]} 経由で {\tt p->branch[k - 1]} に動かす */
+void move_leftnode(BTREEP p, int k)
 {
-    int j;
-    BTREEP left, right;
+    BTREEP left  = p->branch[k - 1];
+    BTREEP right = p->branch[k];
 
-    left = p->branch[k - 1];  right = p->branch[k];
-    left->n++;
-    left->key[left->n - 1] = p->key[k - 1];
-    left->branch[left->n] = right->branch[0];
+    left->numtrees++;
+    left->key[left->numtrees - 1] = p->key[k - 1];
+    left->branch[left->numtrees] = right->branch[0];
     p->key[k - 1] = right->key[0];
     right->branch[0] = right->branch[1];
-    right->n--;
-    for (j = 1; j <= right->n; j++) {
+    right->numtrees--;
+
+    for (int j = 1; j <= right->numtrees; j++)
+    {
         right->key[j - 1] = right->key[j];
         right->branch[j] = right->branch[j + 1];
     }
 }
 
-void combine(BTREEP p, int k, boolean *undersize)  /* {\tt p->branch[k - 1]}, {\tt p->branch[k]} を結合する */
+void combilne_node(BTREEP p, int k, bool *undersize)
 {
-    int j;
-    BTREEP left, right;
+    BTREEP left  = p->branch[k - 1];
+    BTREEP right = p->branch[k];
 
-    right = p->branch[k];
-    left = p->branch[k - 1];
-    left->n++;
-    left->key[left->n - 1] = p->key[k - 1];
-    left->branch[left->n] = right->branch[0];
-    for (j = 1; j <= right->n; j++) {
-        left->n++;
-        left->key[left->n - 1] = right->key[j - 1];
-        left->branch[left->n] = right->branch[j];
+    left->numtrees++;
+    left->key[left->numtrees - 1] = p->key[k - 1];
+    left->branch[left->numtrees] = right->branch[0];
+
+    for (int j = 1; j <= right->numtrees; j++)
+    {
+        left->numtrees++;
+        left->key[left->numtrees - 1] = right->key[j - 1];
+        left->branch[left->numtrees] = right->branch[j];
     }
-    removeitem(p, k - 1, undersize);
+
+    remove_node(p, k - 1, undersize);
     free(right);
 }
 
-void restore(BTREEP p, int k, boolean *undersize)  /* 小さくなりすぎたページ {\tt p->branch[k]} を修復する */
+void restore_node(BTREEP p, int k, bool *undersize)
 {
-    *undersize = FALSE;
-    if (k > 0) {
-        if (p->branch[k - 1]->n > M) moveright(p, k);
-        else combine(p, k, undersize);
-    } else {
-        if (p->branch[1]->n > M) moveleft(p, 1);
-        else combine(p, 1, undersize);
-    }
-}
+    *undersize = false;
 
-void deletesub(BTREEP p, keytype *key, boolean *deleted)  /* ページ {\tt p} から再帰的に木をたどり削除 */
-{
-    int k;
-    BTREEP q;
-    boolean undersize = FALSE;
-
-    if (p == NULL) return;  /* 見つからなかった */
-    k = 0;
-    while (k < p->n && p->key[k] < *key) k++;
-    if (k < p->n && p->key[k] == *key) {  /* 見つかった */
-        *deleted = TRUE;
-        if ((q = p->branch[k + 1]) != NULL) {
-            while (q->branch[0] != NULL) q = q->branch[0];
-            p->key[k] = *key = q->key[0];
-            deletesub(p->branch[k + 1], key, deleted);
-            if (undersize) restore(p, k + 1, &undersize);
-        } else removeitem(p, k, &undersize);
-    } else {
-        deletesub(p->branch[k], key, deleted);
-        if (undersize) restore(p, k, &undersize);
-    }
-}
-
-void delete(BTREEP *root, keytype *key)  /* キー {\tt key} をB木から外す */
-{
-    BTREEP p;
-    boolean deleted = FALSE;
-    deletesub(*root, key, &deleted);  /* 根から再帰的に木をたどり削除する */
-    if (deleted) {
-        if ((*root)->n == 0) {  /* 根が空になった場合 */
-            p = *root;  *root = (*root)->branch[0];  free(p);
-        }
-        // message = "削除しました";
-        printf("削除しました\n");
+    if (k > 0)
+    {
+        if (p->branch[k - 1]->numtrees > NUM)
+            move_rightnode(p, k);
+        else
+            combilne_node(p, k, undersize);
     }
     else
-        printf("見つかりません\n");
-        // message = "見つかりません";
+    {
+        if (p->branch[1]->numtrees > NUM)
+            move_leftnode(p, 1);
+        else
+            combilne_node(p, 1, undersize);
+    }
 }
 
-void printtree(BTREEP p)  /* デモ用にB木を表示 */
+void delete_node(BTREEP p, int *key, bool *deleted)
+{
+    int k = 0;
+    BTREEP q;
+    bool undersize = false;
+
+    if (p == NULL)  // Could not find.
+        return;
+
+    while (k < p->numtrees && p->key[k] < *key)
+        k++;
+
+    if (k < p->numtrees && p->key[k] == *key)   // Found.
+    {
+        *deleted = true;
+        if ((q = p->branch[k + 1]) != NULL)
+        {
+            while (q->branch[0] != NULL)
+                q = q->branch[0];
+            p->key[k] = *key = q->key[0];
+            delete_node(p->branch[k + 1], key, deleted);
+            if (undersize)
+                restore_node(p, k + 1, &undersize);
+        }
+        else
+            remove_node(p, k, &undersize);
+    }
+    else
+    {
+        delete_node(p->branch[k], key, deleted);
+        if (undersize)
+            restore_node(p, k, &undersize);
+    }
+}
+
+void delete_userinput(BTREEP *root, int key)
+{
+    BTREEP p;
+    bool deleted = false;
+    delete_node(*root, &key, &deleted);
+
+    if (deleted)
+    {
+        if ((*root)->numtrees == 0)
+        {
+            p = *root;  *root = (*root)->branch[0];
+            free(p);
+        }
+        // printf(" %d\tDeleted!\n", key);
+    }
+    // else
+    //     printf(" %d\tCould not find...\n", key);
+}
+
+void traverse(BTREEP p)
 {
     static int depth = 0;
-    int k;
 
-    if (p == NULL) {  printf(".");  return;  }
-    printf("(");  depth++;
-    for (k = 0; k < p->n; k++) {
-        printtree(p->branch[k]);  /* 再帰呼出し */
-        printf("%d", p->key[k]);
+    if (p == NULL)
+        return;
+
+    printf("[");
+    depth++;
+    for (int k = 0; k < p->numtrees; k++)
+    {
+        traverse(p->branch[k]);
+        printf(" %d ", p->key[k]);
     }
-    printtree(p->branch[p->n]);  /* 再帰呼出し */
-    printf(")");  depth--;
+    traverse(p->branch[p->numtrees]);
+    printf("]");
+    depth--;
+}
+
+void read_csvfile(BTREEP *root)
+{
+    FILE *lf;
+    char bff[1000];
+    char *value_a;
+
+    if (!(lf=fopen("input.csv","r")))
+        printf("File open error.\n");
+
+    fgets(bff, 1000, lf);
+    for (value_a=strtok(bff, ","); value_a!=NULL; value_a=strtok(NULL, ","))
+        insert_userinput(&(*root), atoi(value_a));
+
+    fclose(lf);
 }
 
 int main()
 {
-    char s[2];
+    char str[2];
     BTREEP root = NULL;
-    keytype key;
+    int key = 0;
 
-    for ( ; ; ) {
-        printf("挿入 In, 検索 Sn, 削除 Dn (n:整数) ? ");
-        if (scanf("%1s%d", s, &key) != 2) break;
-        switch (s[0]) {
-        case 'I':  case 'i':  insert(&root, &key);  break;
-        case 'S':  case 's':  search(root, key);  break;
-        case 'D':  case 'd':  delete(&root, &key);  break;
-        default :
-            // message = "???";
-            break;
+    while(1)
+    {
+        printf("|r: Read csv data into the tree.         |\n");
+        printf("|t: Traverse nodes in the tree.          |\n");
+        printf("|p: Put a node in the tree.              |\n");
+        printf("|d: Delete a node in the tree.           |\n");
+        printf("|s: Serch an array of value in the tree. |\n");
+        printf("|e: End this program.                    |\n\n");
+
+        printf("Enter a above command: ");
+        scanf("%s", str);
+
+        switch (*str)
+        {
+            case 'r':
+                read_csvfile(&root);
+                break;
+            case 't':
+                traverse(root);
+                printf("\n");
+                break;
+            case 'p':
+                printf ("Enter a value you want to put: ");
+                scanf("%d", &key);
+                insert_userinput(&root, key);
+                break;
+            case 'd':
+                printf ("Enter a value you want to delete: ");
+                scanf("%d", &key);
+                delete_userinput(&root, key);
+                break;
+            case 's':
+                printf ("Enter a array of value you want to serch: ");
+                scanf("%d", &key);
+                search_userinput(root, key);
+                break;
+            case 'e':
+                return 0;
+            default :
+                printf("Could not find your command.\n\n");
+                break;
         }
-        // printf("%s\n\n", message);
-        printtree(root);  printf("\n\n");
+
+        printf("\n");
     }
-    return EXIT_SUCCESS;
+
+    return 0;
 }
