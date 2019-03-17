@@ -17,7 +17,7 @@ Input sample: 49,17,56,85,12,97,33,71,19,62,38,84,51,29,77,65,44,99,4,47,67,41,2
 #include <stdlib.h>
 #include <string.h>
 
-#define DATA_NUM 50
+#define DATA_NUM 60
 
 void bubble_sort(int value[], int size)
 {
@@ -176,47 +176,6 @@ void heap_sort (int value[], int size)
     }
 }
 
-// void h_sort (int value[], int size, int root)
-// {
-//     int max;
-
-//     while(1)
-//     {
-//         max = root * 2 + 1;
-//         if (root * 2 + 2 <= size)
-//         {
-//             if(value[root * 2 + 1] < value[root * 2 + 2])
-//                 max = root * 2 + 2;
-//         }
-//         else if (!(root * 2 + 1 <= size))
-//             break;
-
-//         if (value[root] < value[max])
-//         {
-//             swap(&value[root], &value[max]);
-//             root = max;
-//         }
-//         else
-//             break;
-//     }
-//     return;
-// }
-
-// void heap_sort (int value[], int size)
-// {
-//     for (int i = size/2; i >= 0; --i)
-//         h_sort(value,size,i);
-
-//     while(1)
-//     {
-//         swap(&value[0], &value[size--]);
-//         if (!size)
-//             break;
-//         h_sort(value, size,0);
-//     }
-//     return;
-// }
-
 void m_sort (int value[], int left, int right)
 {
     int i, j, mid;
@@ -256,24 +215,19 @@ void read_csvfile(int value[DATA_NUM], int *value_index)
     FILE *lf;
     char bff[DATA_NUM * 4];
     char *value_a;
-    // int value_index;
 
-    /* file open */
     if(!(lf=fopen("input.csv","r"))){
         printf("File open error.\n");
         return;
     }
 
-    /* read data */
-    fgets(bff, DATA_NUM*4, lf);
-    // value_index = 0;
+    fgets(bff, DATA_NUM * 4, lf);
     for (value_a=strtok(bff, ","); value_a!=NULL; value_a=strtok(NULL, ","))
     {
         value[*value_index] = atoi(value_a);
         *value_index += 1;
     }
 
-    /* file close */
     fclose(lf);
 }
 
@@ -285,7 +239,6 @@ int main()
     char str[2];
 
     read_csvfile(value, &value_size);
-    printf("%d\n", value_size);
 
     printf("|o: Original data from  csv.  |\n");
     printf("|b: Bubble sort.              |\n");
@@ -339,10 +292,7 @@ int main()
         }
 
         for (int i = 0; i < value_size; ++i)
-        {
             printf("%d,", value_sorted[i]);
-            value_sorted[i] = 0;
-        }
 
         printf("\n\n");
     }
